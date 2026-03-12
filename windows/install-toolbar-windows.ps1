@@ -15,18 +15,30 @@ if (-not (Test-IsAdministrator)) {
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $toolbarSourceDir = Join-Path $repoRoot "toolbar"
-$installDir = Join-Path $env:LOCALAPPDATA "WTL-Share-Net\toolbar"
-$startupDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup"
-$shortcutPath = Join-Path $startupDir "WTL Share Toolbar.lnk"
-$configPath = Join-Path $installDir "config.json"
-$launcherPath = Join-Path $installDir "start-toolbar.cmd"
 $pythonExe = $null
-$pipInstallCmd = $null
+$targetUser = $null
+$targetProfile = $null
+$installDir = $null
+$startupDir = $null
+$shortcutPath = $null
+$configPath = $null
+$launcherPath = $null
+$logPath = $null
+
+function Get-InteractiveUserName {
+    try {
+        $loggedOn = (Get-CimInstance Win32_ComputerSystem -ErrorAction Stop).UserName
+        if (-not [string]::IsNullOrWhiteSpace($loggedOn)) {
+            return ($loggedOn -split "\\")[-1]
+        }
+    } catch {}
+
+    return $env:USERNAME
+}
 
 function Resolve-PythonRuntime {
     $resolved = @{
         PythonExe = $null
-        PipCmd = $null
     }
 
     if (Get-Command py -ErrorAction SilentlyContinue) {
@@ -34,7 +46,6 @@ function Resolve-PythonRuntime {
             $candidate = (& py -3 -c "import sys; print(sys.executable)" 2>$null).Trim()
             if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path $candidate)) {
                 $resolved.PythonExe = $candidate
-                $resolved.PipCmd = "py -3 -m pip install --user pystray pillow"
                 return $resolved
             }
         } catch {}
@@ -45,7 +56,6 @@ function Resolve-PythonRuntime {
             $candidate = (& python -c "import sys; print(sys.executable)" 2>$null).Trim()
             if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($candidate) -and (Test-Path $candidate)) {
                 $resolved.PythonExe = $candidate
-                $resolved.PipCmd = "python -m pip install --user pystray pillow"
                 return $resolved
             }
         } catch {}
@@ -61,7 +71,6 @@ function Resolve-PythonRuntime {
     foreach ($path in $possiblePaths) {
         if (Test-Path $path) {
             $resolved.PythonExe = $path
-            $resolved.PipCmd = "`"$path`" -m pip install --user pystray pillow"
             return $resolved
         }
     }
@@ -94,21 +103,33 @@ function Install-Python3 {
 # Resolve a real Python interpreter. `py`/`python` aliases may exist without Python actually installed.
 $runtime = Resolve-PythonRuntime
 $pythonExe = $runtime.PythonExe
-$pipInstallCmd = $runtime.PipCmd
 
 if (-not $pythonExe) {
     Install-Python3
     Start-Sleep -Seconds 2
     $runtime = Resolve-PythonRuntime
     $pythonExe = $runtime.PythonExe
-    $pipInstallCmd = $runtime.PipCmd
 }
 
 if (-not $pythonExe) {
     Write-Error "Python 3 is required but could not be auto-installed. Install Python 3 and rerun this script."
 }
 
+$targetUser = Get-InteractiveUserName
+$targetProfile = Join-Path $env:SystemDrive "Users\$targetUser"
+if (-not (Test-Path $targetProfile)) {
+    Write-Error "Unable to resolve profile path for interactive user '$targetUser'."
+}
+
+$installDir = Join-Path $targetProfile "AppData\Local\WTL-Share-Net\toolbar"
+$startupDir = Join-Path $targetProfile "AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup"
+$shortcutPath = Join-Path $startupDir "WTL Share Toolbar.lnk"
+$configPath = Join-Path $installDir "config.json"
+$launcherPath = Join-Path $installDir "start-toolbar.cmd"
+$logPath = Join-Path $installDir "toolbar.log"
+
 New-Item -ItemType Directory -Path $installDir -Force | Out-Null
+New-Item -ItemType Directory -Path $startupDir -Force | Out-Null
 Copy-Item -Path (Join-Path $toolbarSourceDir "share_toolbar.py") -Destination (Join-Path $installDir "share_toolbar.py") -Force
 
 if (-not (Test-Path $configPath)) {
@@ -116,7 +137,7 @@ if (-not (Test-Path $configPath)) {
 }
 
 Write-Host "Installing Python dependencies for toolbar"
-Invoke-Expression $pipInstallCmd
+& $pythonExe -m pip install pystray pillow
 
 $pythonw = Join-Path (Split-Path $pythonExe) "pythonw.exe"
 if (-not (Test-Path $pythonw)) {
@@ -125,7 +146,7 @@ if (-not (Test-Path $pythonw)) {
 
 $launcherContent = @"
 @echo off
-"$pythonw" "$installDir\share_toolbar.py" --config "$configPath"
+"$pythonw" "$installDir\share_toolbar.py" --config "$configPath" 1>>"$logPath" 2>&1
 "@
 Set-Content -Path $launcherPath -Value $launcherContent -Encoding ascii -Force
 
@@ -136,7 +157,15 @@ $shortcut.WorkingDirectory = $installDir
 $shortcut.WindowStyle = 7
 $shortcut.Save()
 
-Start-Process -FilePath $launcherPath -WindowStyle Hidden
+$currentUser = "$env:USERDOMAIN\$env:USERNAME"
+$interactiveUserFull = (Get-CimInstance Win32_ComputerSystem -ErrorAction SilentlyContinue).UserName
+if ([string]::IsNullOrWhiteSpace($interactiveUserFull) -or $interactiveUserFull -eq $currentUser) {
+    Start-Process -FilePath $launcherPath -WindowStyle Hidden
+} else {
+    Write-Warning "Detected interactive desktop user '$interactiveUserFull'."
+    Write-Warning "Toolbar is installed for that user and will appear on next sign-in."
+}
 
 Write-Host "WTL Share Toolbar installed and set to autostart."
 Write-Host "Config file: $configPath"
+Write-Host "Log file: $logPath"

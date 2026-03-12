@@ -282,6 +282,8 @@ explorer Z:
 - `Share-Ubuntu` missing in `smbclient -L`: run `sudo testparm -s` and then `sudo bash ./ubuntu/fix-share-ubuntu.sh --windows-ip <WINDOWS_IP> --share-user <USER>`.
 - `NT_STATUS_LOGON_FAILURE`: reset Samba password with `sudo smbpasswd -a <USER>` and `sudo smbpasswd -e <USER>`.
 - macOS SMB login uses the existing macOS account password for the `--share-user` account.
+- Toolbar icon not visible on Windows: run `.\windows\install-toolbar-windows.ps1` in Administrator PowerShell, then check `%LOCALAPPDATA%\WTL-Share-Net\toolbar\toolbar.log` (for the interactive user profile).
+- Toolbar icon not visible on Ubuntu: run `sudo bash ./ubuntu/install-toolbar-ubuntu.sh` from the desktop user session, then check `~/.local/share/wtl-share-net/toolbar/toolbar.log`.
 
 ## Toolbar App
 
