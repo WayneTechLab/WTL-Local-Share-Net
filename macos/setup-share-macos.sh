@@ -197,9 +197,9 @@ if [[ -z "$share_user" ]]; then
 fi
 
 if [[ -z "$share_pass" ]]; then
-  read -r -s -p "Enter password for macOS user '$share_user': " share_pass
+  read -r -s -p "Enter the NETWORK SHARE password (macOS account password) for '$share_user': " share_pass
   echo
-  read -r -s -p "Confirm password: " share_pass_confirm
+  read -r -s -p "Confirm the NETWORK SHARE password: " share_pass_confirm
   echo
 else
   share_pass_confirm="$share_pass"

@@ -167,7 +167,8 @@ Ubuntu prompts for:
 
 - allowed client scope (auto-detect default)
 - SMB username
-- SMB password + confirmation
+- SMB/network-share password + confirmation
+- does not overwrite Linux login password
 
 Mount the Windows share from Ubuntu:
 
@@ -255,7 +256,7 @@ macOS prompts for:
 
 - allowed client scope (auto-detect default)
 - SMB username
-- SMB password + confirmation (validated with `dscl` before setup continues)
+- SMB/network-share password + confirmation (this is the selected macOS account password, validated with `dscl`)
 
 ## Verify
 

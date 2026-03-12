@@ -10,7 +10,7 @@ confirm_exposure=""
 allow_vpn_route="false"
 windows_ip=""
 share_user=""
-share_pass=""
+smb_share_pass=""
 client_scope=""
 
 is_valid_ipv4() {
@@ -132,7 +132,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     --share-pass)
-      share_pass="${2:-}"
+      smb_share_pass="${2:-}"
       shift 2
       ;;
     *)
@@ -171,13 +171,13 @@ if [[ -z "$share_user" ]]; then
   share_user="$(read_required "Enter the Linux username Windows will use: ")"
 fi
 
-if [[ -z "$share_pass" ]]; then
-  read -r -s -p "Enter the password for this share user: " share_pass
+if [[ -z "$smb_share_pass" ]]; then
+  read -r -s -p "Enter the NETWORK SHARE password for this SMB user: " smb_share_pass
   echo
-  read -r -s -p "Confirm the password: " share_pass_confirm
+  read -r -s -p "Confirm the NETWORK SHARE password: " share_pass_confirm
   echo
 else
-  share_pass_confirm="$share_pass"
+  share_pass_confirm="$smb_share_pass"
 fi
 
 if ! is_valid_ipv4_or_cidr "$windows_ip"; then
@@ -191,7 +191,7 @@ if ! is_valid_username "$share_user"; then
   exit 1
 fi
 
-if [[ "$share_pass" != "$share_pass_confirm" ]]; then
+if [[ "$smb_share_pass" != "$share_pass_confirm" ]]; then
   echo "Passwords do not match."
   exit 1
 fi
@@ -220,14 +220,16 @@ echo "[3/8] Creating or updating restricted user $share_user"
 if ! id "$share_user" >/dev/null 2>&1; then
   useradd -M -s /usr/sbin/nologin "$share_user"
 fi
-echo "$share_user:$share_pass" | chpasswd
+# Do not set/overwrite the Linux account login password here.
+# This installer sets only the SMB/network share password below.
+usermod -L "$share_user" >/dev/null 2>&1 || true
 
 echo "[4/8] Setting folder permissions"
 chown -R "$share_user:$share_user" "$share_path"
 chmod 0770 "$share_path"
 
 echo "[5/8] Setting Samba password"
-(echo "$share_pass"; echo "$share_pass") | smbpasswd -a -s "$share_user" >/dev/null
+(echo "$smb_share_pass"; echo "$smb_share_pass") | smbpasswd -a -s "$share_user" >/dev/null
 smbpasswd -e "$share_user" >/dev/null
 
 echo "[6/8] Writing Samba configuration"

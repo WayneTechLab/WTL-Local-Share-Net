@@ -127,8 +127,8 @@ if ([string]::IsNullOrWhiteSpace($ClientScope)) {
 }
 
 $shareUser = Read-RequiredValue -Prompt "Enter the local username Ubuntu will use"
-$sharePassword = Read-Host "Enter the password for this share user" -AsSecureString
-$sharePasswordConfirm = Read-Host "Confirm the password" -AsSecureString
+$sharePassword = Read-Host "Enter the NETWORK SHARE password for this account" -AsSecureString
+$sharePasswordConfirm = Read-Host "Confirm the NETWORK SHARE password" -AsSecureString
 
 $bstrOne = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sharePassword)
 $bstrTwo = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($sharePasswordConfirm)
