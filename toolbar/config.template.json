@@ -1,0 +1,16 @@
+{
+  "scan_interval_seconds": 20,
+  "default_shares": [
+    "Share-Windows",
+    "Share-Ubuntu",
+    "Share-macOS"
+  ],
+  "auto_discovery": {
+    "enabled": true,
+    "completed": false,
+    "timeout_seconds": 0.35,
+    "max_workers": 128,
+    "targets": []
+  },
+  "devices": []
+}
