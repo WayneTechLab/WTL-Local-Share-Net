@@ -71,6 +71,13 @@ Set-ExecutionPolicy Bypass -Scope Process -Force
 .\install-unified.ps1
 ```
 
+Default behavior is a clean reinstall (uninstall existing toolbar/share config, then install fresh).  
+Use install-only mode:
+
+```powershell
+.\install-unified.ps1 -SkipClean
+```
+
 Run PowerShell as Administrator:
 
 ```powershell
@@ -120,6 +127,13 @@ Unified installer (recommended):
 
 ```bash
 bash ./install-unified.sh
+```
+
+Default behavior is a clean reinstall (uninstall existing toolbar/share config, then install fresh).  
+Use install-only mode:
+
+```bash
+bash ./install-unified.sh --skip-clean
 ```
 
 Run from a shell with sudo:
@@ -227,6 +241,13 @@ Unified installer (recommended):
 
 ```bash
 bash ./install-unified.sh
+```
+
+Default behavior is a clean reinstall (uninstall existing toolbar/share config, then install fresh).  
+Use install-only mode:
+
+```bash
+bash ./install-unified.sh --skip-clean
 ```
 
 Run on macOS with sudo:

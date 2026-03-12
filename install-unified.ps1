@@ -2,7 +2,8 @@
 param(
     [ValidateSet("auto", "windows")]
     [string]$Os = "auto",
-    [switch]$NoPrompt
+    [switch]$NoPrompt,
+    [switch]$SkipClean
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,10 +30,26 @@ if ($Os -ne $detectedOs) {
 }
 
 if (-not $NoPrompt) {
-    $confirm = Read-Host "Detected OS: $Os. Proceed with share + toolbar install? [Y/n]"
+    $mode = if ($SkipClean) { "install" } else { "clean reinstall" }
+    $confirm = Read-Host "Detected OS: $Os. Proceed with $mode (uninstall then install)? [Y/n]"
     if ($confirm -match "^[Nn]") {
         Write-Host "Cancelled."
         exit 0
+    }
+}
+
+if (-not $SkipClean) {
+    Write-Host "Running Windows clean uninstall first..."
+    try {
+        & (Join-Path $repoRoot "windows\uninstall-toolbar-windows.ps1")
+    } catch {
+        Write-Warning "Toolbar uninstall step failed: $($_.Exception.Message)"
+    }
+
+    try {
+        & (Join-Path $repoRoot "windows\uninstall-share-windows.ps1") -ConfirmExposure -SkipUserRemoval
+    } catch {
+        Write-Warning "Share uninstall step failed: $($_.Exception.Message)"
     }
 }
 

@@ -13,15 +13,18 @@ Usage:
 Options:
   --os <ubuntu|macos>   Override OS selection (auto-detect by default)
   --no-prompt           Do not ask for confirmation
+  --skip-clean          Skip uninstall phase and run install only
   -h, --help            Show help
 
 Behavior:
+  - By default runs clean reinstall: uninstall then install.
   - Runs share setup for detected/selected OS.
   - Installs toolbar and configures autostart.
 EOF
 }
 
 no_prompt="false"
+skip_clean="false"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -31,6 +34,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --no-prompt)
       no_prompt="true"
+      shift
+      ;;
+    --skip-clean)
+      skip_clean="true"
       shift
       ;;
     -h|--help)
@@ -71,7 +78,11 @@ if [[ "$selected_os" != "$detected_os" ]]; then
 fi
 
 if [[ "$no_prompt" != "true" ]]; then
-  read -r -p "Detected OS: $selected_os. Proceed with share + toolbar install? [Y/n]: " confirm
+  mode="clean reinstall (uninstall then install)"
+  if [[ "$skip_clean" == "true" ]]; then
+    mode="install only"
+  fi
+  read -r -p "Detected OS: $selected_os. Proceed with $mode? [Y/n]: " confirm
   if [[ "${confirm:-Y}" =~ ^[Nn]$ ]]; then
     echo "Cancelled."
     exit 0
@@ -79,9 +90,17 @@ if [[ "$no_prompt" != "true" ]]; then
 fi
 
 if [[ "$selected_os" == "ubuntu" ]]; then
+  if [[ "$skip_clean" != "true" ]]; then
+    sudo bash "$repo_root/ubuntu/uninstall-toolbar-ubuntu.sh" || true
+    sudo bash "$repo_root/ubuntu/uninstall-share-ubuntu.sh" --confirm-exposure --keep-user || true
+  fi
   sudo bash "$repo_root/ubuntu/setup-share-ubuntu.sh" --confirm-exposure
   sudo bash "$repo_root/install-toolbar.sh" --no-prompt
 elif [[ "$selected_os" == "macos" ]]; then
+  if [[ "$skip_clean" != "true" ]]; then
+    sudo bash "$repo_root/macos/uninstall-toolbar-macos.sh" || true
+    sudo bash "$repo_root/macos/uninstall-share-macos.sh" --confirm-exposure || true
+  fi
   sudo bash "$repo_root/macos/setup-share-macos.sh" --confirm-exposure
   sudo bash "$repo_root/install-toolbar.sh" --no-prompt
 fi

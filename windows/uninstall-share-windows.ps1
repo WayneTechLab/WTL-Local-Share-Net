@@ -1,20 +1,18 @@
 [CmdletBinding()]
 param(
-    [switch]$ConfirmExposure
+    [switch]$ConfirmExposure,
+    [string]$ShareUser,
+    [switch]$SkipUserRemoval
 )
 
 $ErrorActionPreference = "Stop"
 
-function Read-RequiredValue {
+function Read-OptionalValue {
     param(
         [Parameter(Mandatory = $true)]
         [string]$Prompt
     )
-
-    do {
-        $value = Read-Host $Prompt
-    } while ([string]::IsNullOrWhiteSpace($value))
-
+    $value = Read-Host $Prompt
     return $value.Trim()
 }
 
@@ -36,7 +34,6 @@ if (-not $ConfirmExposure) {
     }
 }
 
-$shareUser = Read-RequiredValue -Prompt "Enter the share user to remove"
 $sharePath = "C:\Share-Windows"
 $shareName = "Share-Windows"
 $firewallGroup = "File and Printer Sharing"
@@ -52,10 +49,22 @@ Get-NetFirewallRule -DisplayGroup $firewallGroup -ErrorAction SilentlyContinue |
     Where-Object { $_.Direction -eq "Inbound" } |
     Set-NetFirewallAddressFilter -RemoteAddress "Any"
 
-Write-Host "Removing local user if present"
-$existingUser = Get-LocalUser -Name $shareUser -ErrorAction SilentlyContinue
-if ($null -ne $existingUser) {
-    Remove-LocalUser -Name $shareUser
+if (-not $SkipUserRemoval) {
+    if ([string]::IsNullOrWhiteSpace($ShareUser)) {
+        $ShareUser = Read-OptionalValue -Prompt "Enter the share user to remove (leave blank to keep user)"
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($ShareUser)) {
+        Write-Host "Removing local user if present"
+        $existingUser = Get-LocalUser -Name $ShareUser -ErrorAction SilentlyContinue
+        if ($null -ne $existingUser) {
+            Remove-LocalUser -Name $ShareUser
+        }
+    } else {
+        Write-Host "No share user provided; skipping local user removal."
+    }
+} else {
+    Write-Host "Skipping local user removal (--SkipUserRemoval)."
 }
 
 Write-Host "Share folder left in place at $sharePath"
