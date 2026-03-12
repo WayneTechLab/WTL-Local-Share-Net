@@ -43,6 +43,7 @@ if command -v apt-get >/dev/null 2>&1; then
     libayatana-appindicator3-1 gir1.2-ayatanaappindicator3-0.1 || true
 
   DEBIAN_FRONTEND=noninteractive apt-get install -y gir1.2-appindicator3-0.1 || true
+  DEBIAN_FRONTEND=noninteractive apt-get install -y gnome-shell-extension-appindicator || true
 fi
 
 sudo -u "$target_user" python3 -m pip install --user --break-system-packages pystray pillow
