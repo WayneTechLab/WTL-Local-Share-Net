@@ -75,7 +75,7 @@ Default behavior is a clean reinstall (uninstall existing toolbar/share config, 
 Use install-only mode:
 
 ```powershell
-.\install-unified.ps1 -SkipClean
+.\install-unified.ps1 -Mode install-only
 ```
 
 Run PowerShell as Administrator:
@@ -133,7 +133,7 @@ Default behavior is a clean reinstall (uninstall existing toolbar/share config, 
 Use install-only mode:
 
 ```bash
-bash ./install-unified.sh --skip-clean
+bash ./install-unified.sh --mode install-only
 ```
 
 Run from a shell with sudo:
@@ -247,8 +247,17 @@ Default behavior is a clean reinstall (uninstall existing toolbar/share config, 
 Use install-only mode:
 
 ```bash
-bash ./install-unified.sh --skip-clean
+bash ./install-unified.sh --mode install-only
 ```
+
+Unified mode options (Windows and Linux/macOS):
+
+- `clean-reinstall` (default): uninstall old share/tooling + legacy artifacts, then install fresh
+- `install-only`: install/reconfigure without uninstall pass
+- `update-app-only`: refresh toolbar app only, keep shares untouched
+- `share-only`: setup share only, no toolbar install
+- `toolbar-only`: setup toolbar only, no share changes
+- `uninstall-only`: remove configured share + toolbar only
 
 Run on macOS with sudo:
 
