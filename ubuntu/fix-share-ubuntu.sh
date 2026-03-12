@@ -8,6 +8,7 @@ share_name="Share-Ubuntu"
 samba_conf="/etc/samba/smb.conf"
 share_conf_dir="/etc/samba/smb.conf.d"
 share_conf_file="$share_conf_dir/wtl-local-share-net.conf"
+global_conf_file="$share_conf_dir/wtl-local-share-net-global.conf"
 
 is_valid_ipv4() {
   local ip="$1"
@@ -97,12 +98,21 @@ EOF
 fi
 
 echo "[4/8] Writing Share-Ubuntu snippet"
+cat >"$global_conf_file" <<EOF
+[global]
+   map to guest = Never
+   server min protocol = SMB2_10
+   server signing = mandatory
+   ntlm auth = ntlmv2-only
+EOF
+
 cat >"$share_conf_file" <<EOF
 [$share_name]
    path = $share_path
    browseable = yes
    read only = no
    guest ok = no
+   smb encrypt = desired
    valid users = $share_user
    force user = $share_user
    create mask = 0660

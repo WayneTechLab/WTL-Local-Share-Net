@@ -50,6 +50,12 @@ Each share is restricted to a client scope (auto-detected local subnet by defaul
 - SMB1 disabled on Windows
 - SMB3 required on Ubuntu
 - Firewall restricted to auto-detected client subnet (or explicit IP/CIDR) on port `445`
+- Ubuntu Samba hardening for cross-platform interop:
+  - `server min protocol = SMB2_10`
+  - `server signing = mandatory`
+  - `ntlm auth = ntlmv2-only`
+  - `map to guest = Never`
+  - Share-level `smb encrypt = desired`
 
 Installers require explicit exposure confirmation before they make changes.
 
@@ -285,6 +291,7 @@ explorer Z:
 - macOS SMB login uses the existing macOS account password for the `--share-user` account.
 - Toolbar icon not visible on Windows: run `.\windows\install-toolbar-windows.ps1` in Administrator PowerShell, then check `%LOCALAPPDATA%\WTL-Share-Net\toolbar\toolbar.log` (for the interactive user profile).
 - Toolbar icon not visible on Ubuntu: run `sudo bash ./ubuntu/install-toolbar-ubuntu.sh` from the desktop user session, then check `~/.local/share/wtl-share-net/toolbar/toolbar.log`.
+- If Windows 11/Server clients fail against Linux shares after policy hardening, verify Samba signing/encryption and avoid guest logons.
 
 ## Toolbar App
 

@@ -6,6 +6,7 @@ share_name="Share-Ubuntu"
 samba_conf="/etc/samba/smb.conf"
 share_conf_dir="/etc/samba/smb.conf.d"
 share_conf_file="$share_conf_dir/wtl-local-share-net.conf"
+global_conf_file="$share_conf_dir/wtl-local-share-net-global.conf"
 confirm_exposure=""
 allow_vpn_route="false"
 windows_ip=""
@@ -236,12 +237,21 @@ echo "[6/8] Writing Samba configuration"
 mkdir -p "$share_conf_dir"
 ensure_samba_include
 
+cat >"$global_conf_file" <<EOF
+[global]
+   map to guest = Never
+   server min protocol = SMB2_10
+   server signing = mandatory
+   ntlm auth = ntlmv2-only
+EOF
+
 cat >"$share_conf_file" <<EOF
 [$share_name]
    path = $share_path
    browseable = yes
    read only = no
    guest ok = no
+   smb encrypt = desired
    valid users = $share_user
    force user = $share_user
    create mask = 0660
@@ -254,6 +264,16 @@ echo "[7/8] Validating and restarting Samba"
 testparm -s >/dev/null
 systemctl enable smbd
 systemctl restart smbd
+
+if ! testparm -s 2>/dev/null | grep -q "^\[$share_name\]"; then
+  echo "Samba validation failed: share stanza [$share_name] is not active."
+  exit 1
+fi
+
+if ! smbclient -L //127.0.0.1 -U "$share_user%$smb_share_pass" -m SMB3 >/dev/null 2>&1; then
+  echo "Warning: local SMB login test failed."
+  echo "Run: sudo smbpasswd -a $share_user && sudo smbpasswd -e $share_user"
+fi
 
 echo "[8/8] Restricting firewall to $windows_ip"
 while ufw status numbered | grep -q "445/tcp"; do
