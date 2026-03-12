@@ -2,6 +2,15 @@
 
 Open source utility for creating a locked-down local SMB share on Windows, Ubuntu, and macOS.
 
+## About
+
+WTL Local Share Net is maintained by Wayne Tech Lab LLC.  
+Website: [www.WayneTechLab.com](https://www.WayneTechLab.com)
+
+## Disclaimer
+
+Use this software at your own risk. Wayne Tech Lab LLC provides this project "as is", without warranties or guarantees of any kind, express or implied, including but not limited to merchantability, fitness for a particular purpose, security, availability, or non-infringement. You are responsible for validating configuration, access controls, and legal/security compliance in your own environment.
+
 This repo creates:
 
 - `C:\Share-Windows` shared as `Share-Windows`
@@ -340,3 +349,7 @@ git commit -m "Add local share setup scripts for Windows and Ubuntu"
 git remote add origin https://github.com/YOUR_GITHUB_USER/YOUR_REPO.git
 git push -u origin codex/wtl-local-share-net
 ```
+
+## License
+
+This project is open source under the MIT License. Copyright (c) Wayne Tech Lab LLC.
